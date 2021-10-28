@@ -150,7 +150,6 @@ namespace NetEaseMusic_DiscordRPC.Win32Api
                         title = GetWindowTitle(handle);
                         processId = xpid;
                     }
-
                     return true;
                 },
                 IntPtr.Zero

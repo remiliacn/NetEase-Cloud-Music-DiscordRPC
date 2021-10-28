@@ -5,15 +5,18 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Web;
 using System.Windows.Forms;
 
 namespace NetEaseMusic_DiscordRPC
 {
     static class Program
     {
-        private const string ApplicationId = "481562643958595594";
+        private const string ApplicationId = "903118630676492378";
+        
 
         private static async Task Main()
         {
@@ -40,6 +43,7 @@ namespace NetEaseMusic_DiscordRPC
             {
                 using var discord = new DiscordRpcClient(ApplicationId);
                 discord.Initialize();
+                discord.RegisterUriScheme();
 
                 var playerState = false;
                 var currentSong = string.Empty;
@@ -115,12 +119,7 @@ namespace NetEaseMusic_DiscordRPC
 
                     update:
                         // update
-#if DEBUG
                         if (!playerState)
-#else
-                        if (Win32Api.User32.IsFullscreenAppRunning() || Win32Api.User32.IsWhitelistAppRunning() ||
-                            !playerState)
-#endif
                         {
                             Debug.Print(
                                 $"Try clear Rpc {Win32Api.User32.IsFullscreenAppRunning()} | {Win32Api.User32.IsWhitelistAppRunning()}");
@@ -137,6 +136,11 @@ namespace NetEaseMusic_DiscordRPC
                             // skip
                             continue;
 
+                        string url = "https://www.google.com/search?q=" + HttpUtility.UrlEncode(currentSong + " - " + currentSing + " YouTube");
+
+                        string baiduUrl = "https://www.baidu.com/s?wd=" + HttpUtility.UrlEncode(currentSong + " - " + currentSing + " 网易云音乐");
+                        
+
                         discord.SetPresence(new RichPresence
                         {
                             Assets = new Assets
@@ -144,13 +148,24 @@ namespace NetEaseMusic_DiscordRPC
                                 LargeImageKey = "timg",
                                 LargeImageText = "网易云音乐"
                             },
+                            Buttons = new DiscordRPC.Button[] {
+                                new DiscordRPC.Button() {
+                                    Label = "Listen together?",
+                                    Url = url
+                                },
+                                new DiscordRPC.Button()
+                                {
+                                    Label = "一起听嘛~",
+                                    Url = baiduUrl
+                                }
+                            },
                             Timestamps = new Timestamps(
                                 DateTime.UtcNow.Subtract(TimeSpan.FromSeconds(currentRate)),
                                 DateTime.UtcNow.Subtract(TimeSpan.FromSeconds(currentRate))
                                     .Add(TimeSpan.FromSeconds(maxSongLens))),
                             Details = currentSong,
                             State = $"by {currentSing}"
-                        });
+                        }); ;
 
                         Debug.Print("Update Rpc");
                     }
@@ -173,7 +188,7 @@ namespace NetEaseMusic_DiscordRPC
             {
                 BalloonTipIcon = ToolTipIcon.Info,
                 ContextMenu = notifyMenu,
-                Text = "NetEase Cloud Music DiscordRPC",
+                Text = "网易云音乐",
                 Icon = Properties.Resources.icon,
                 Visible = true
             };
@@ -225,10 +240,6 @@ namespace NetEaseMusic_DiscordRPC
                     MessageBoxIcon.Error);
                 if (r == DialogResult.Retry)
                     goto retry;
-
-#if !DEBUG
-                Environment.Exit(-1);
-#endif
             }
         }
     }
